@@ -3,16 +3,8 @@ use std::fs;
 use std::path::PathBuf;
 use std::ffi::OsStr;
 
-// Go to the development directory. Find out and list all the
-// directories that have git in them.
-//
-// Phase2: Do it concurrently.
+
 fn main() {
-    // Basic approach.
-    // Start from the root directory.
-    // Recursively traverse all the child directories looking for .git
-    // If found then don't recurse further into its descendants.
-    // Else continue going deep.
     let dirs = fs::read_dir("/Users/dinesh/Documents/developer/").unwrap();
 
     for dir in dirs {
