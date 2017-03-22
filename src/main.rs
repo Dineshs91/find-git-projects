@@ -1,4 +1,3 @@
-use std::io::prelude::*;
 use std::fs;
 use std::path::PathBuf;
 use std::ffi::OsStr;
@@ -17,12 +16,10 @@ fn main() {
 
     for dir in dirs {
         let dir_entry = dir.unwrap();
-        let dir_name = dir_entry.file_name();
         let dir_path = dir_entry.path();
         let is_dir: bool = dir_entry.metadata().unwrap().is_dir();
 
         if is_dir {
-            //println!("{:?} - {:?}", dir_name, dir_path);
             walk(dir_path);
         }
     }
