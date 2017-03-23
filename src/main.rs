@@ -1,14 +1,18 @@
 extern crate clap;
 use clap::{Arg, App};
 
+use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
 use std::thread;
 use std::fs;
 use std::path::PathBuf;
 use std::ffi::OsStr;
 
+static GLOBAL_PROJECT_COUNT: AtomicUsize = ATOMIC_USIZE_INIT;
+
 
 fn main() {
     let input_dir = cli();
+
     if input_dir.is_empty() {
         panic!("Provide a directory path to search");
     }
@@ -23,6 +27,8 @@ fn main() {
             walk(dir_path);
         }
     }
+
+    println!("Project count: {}", GLOBAL_PROJECT_COUNT.load(Ordering::Relaxed));
 }
 
 fn cli() -> String {
@@ -43,6 +49,7 @@ fn cli() -> String {
 fn walk(dir_path: PathBuf) {
     // We will use threads only at this level.
     if find_git(&dir_path) {
+        GLOBAL_PROJECT_COUNT.fetch_add(1, Ordering::Relaxed);
         println!("Path is {:?}", dir_path);
     } else {
         let handle = thread::spawn(|| {
