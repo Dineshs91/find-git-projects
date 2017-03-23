@@ -1,3 +1,6 @@
+extern crate clap;
+use clap::{Arg, App};
+
 use std::thread;
 use std::fs;
 use std::path::PathBuf;
@@ -5,7 +8,11 @@ use std::ffi::OsStr;
 
 
 fn main() {
-    let dirs = fs::read_dir("/Users/dinesh/Documents/developer/").unwrap();
+    let input_dir = cli();
+    if input_dir.is_empty() {
+        panic!("Provide a directory path to search");
+    }
+    let dirs = fs::read_dir(input_dir).unwrap();
 
     for dir in dirs {
         let dir_entry = dir.unwrap();
@@ -16,6 +23,21 @@ fn main() {
             walk(dir_path);
         }
     }
+}
+
+fn cli() -> String {
+    let matches = App::new("find-git-projects")
+        .version("0.1.0")
+        .author("Dineshs91 <dineshpy07@gmail.com>")
+        .about("Find the projects that use git")
+        .arg(Arg::with_name("dir")
+        .short("d")
+        .long("dir")
+        .value_name("DIR")
+        .takes_value(true)).get_matches();
+
+    let dir = matches.value_of("dir");
+    dir.unwrap_or("").to_string()
 }
 
 fn walk(dir_path: PathBuf) {
