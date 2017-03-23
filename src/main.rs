@@ -16,17 +16,10 @@ fn main() {
     if input_dir.is_empty() {
         panic!("Provide a directory path to search");
     }
-    let dirs = fs::read_dir(input_dir).unwrap();
+    // let dirs = fs::read_dir(input_dir).unwrap();
+    let dir_path = PathBuf::from(input_dir);
 
-    for dir in dirs {
-        let dir_entry = dir.unwrap();
-        let dir_path = dir_entry.path();
-        let is_dir: bool = dir_entry.metadata().unwrap().is_dir();
-
-        if is_dir {
-            walk(dir_path);
-        }
-    }
+    walk(dir_path);
 
     println!("Project count: {}", GLOBAL_PROJECT_COUNT.load(Ordering::Relaxed));
 }
@@ -52,19 +45,19 @@ fn walk(dir_path: PathBuf) {
         GLOBAL_PROJECT_COUNT.fetch_add(1, Ordering::Relaxed);
         println!("Path is {:?}", dir_path);
     } else {
-        let handle = thread::spawn(|| {
-            let dirs = fs::read_dir(dir_path).unwrap();
+        let dirs = fs::read_dir(dir_path).unwrap();
 
-            for dir in dirs {
-                let dir_entry = dir.unwrap();
-                let dir_path = dir_entry.path();
-                let is_dir: bool = dir_entry.metadata().unwrap().is_dir();
+        for dir in dirs {
+            let dir_entry = dir.unwrap();
+            let dir_path = dir_entry.path();
+            let is_dir: bool = dir_entry.metadata().unwrap().is_dir();
 
-                if is_dir {
+            if is_dir {
+                let handle = thread::spawn(|| {
                     walk(dir_path);
-                }
+                });
             }
-        });
+        }
     }
 }
 
