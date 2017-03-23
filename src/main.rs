@@ -16,7 +16,7 @@ fn main() {
     if input_dir.is_empty() {
         panic!("Provide a directory path to search");
     }
-    // let dirs = fs::read_dir(input_dir).unwrap();
+
     let dir_path = PathBuf::from(input_dir);
 
     walk(dir_path);
@@ -40,24 +40,42 @@ fn cli() -> String {
 }
 
 fn walk(dir_path: PathBuf) {
-    // We will use threads only at this level.
     if find_git(&dir_path) {
         GLOBAL_PROJECT_COUNT.fetch_add(1, Ordering::Relaxed);
         println!("Path is {:?}", dir_path);
     } else {
         let dirs = fs::read_dir(dir_path).unwrap();
+        let dirs_collect = dirs.collect::<Vec<_>>();
 
-        for dir in dirs {
-            let dir_entry = dir.unwrap();
-            let dir_path = dir_entry.path();
-            let is_dir: bool = dir_entry.metadata().unwrap().is_dir();
+        if dirs_collect.len() > 10 {
+            // launch a thread only if there are more than 10 sub directories.
+            let handle = thread::spawn(|| {
+                for dir in dirs_collect {
+                    let dir_entry = dir.unwrap();
+                    let dir_path = dir_entry.path();
+                    let is_dir: bool = dir_entry.metadata().unwrap().is_dir();
 
-            if is_dir {
-                let handle = thread::spawn(|| {
+                    if is_dir {
+                        walk(dir_path);
+                    }
+                }
+            });
+
+            // Wait for the child thread to finish processing.
+            handle.join();
+        } else {
+            // Handle it in the same thread.
+            for dir in dirs_collect {
+                let dir_entry = dir.unwrap();
+                let dir_path = dir_entry.path();
+                let is_dir: bool = dir_entry.metadata().unwrap().is_dir();
+
+                if is_dir {
                     walk(dir_path);
-                });
+                }
             }
         }
+        
     }
 }
 
